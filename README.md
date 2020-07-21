@@ -1,2 +1,2 @@
 # arcane
-A sidescrolling, survival crafting game
+A sidescrolling, survival crafting game made in libgdx+java
