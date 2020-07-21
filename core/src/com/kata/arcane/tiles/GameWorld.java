@@ -12,7 +12,7 @@ import java.lang.reflect.Array;
 import java.sql.Time;
 import java.util.*;
 
-public class World {
+public class GameWorld {
     //list of ALL the chunks in the world. Generating each chunk as the player encountered it and leaving it in the cache seemed
     //not performant at all. Better solution?
     public HashMap<Integer, Chunk> chunks;
@@ -33,7 +33,7 @@ public class World {
 
     private Random random;
 
-    public World(Box2DWorld boxWorld) {
+    public GameWorld(Box2DWorld boxWorld) {
         //first get random seed based on current time
         Calendar calendar = Calendar.getInstance();
         seed = calendar.get(Calendar.YEAR) + calendar.get(Calendar.MONTH) + calendar.get(Calendar.DAY_OF_MONTH) + calendar.get(Calendar.HOUR_OF_DAY) + calendar.get(Calendar.MINUTE) + calendar.get(Calendar.SECOND);
@@ -69,7 +69,9 @@ public class World {
 
     //generates the chunk
     public void GenerateChunk(int position) {
-
+        if(position >= worldWidth / 2 || position < -worldWidth / 2) {
+            return;
+        }
         Chunk chunk = new Chunk(position, 0);
         //i is the local position of the tile (within the chunk)
         //first iterates through each x value in the chunk
@@ -92,7 +94,7 @@ public class World {
                 }
             }
         }
-        chunk.UpdateLightLevel();
+        chunk.UpdateLightLevel(this);
         chunks.put(position, chunk);
     }
 
@@ -104,7 +106,7 @@ public class World {
         //iterate through the visible chunks. if one is NOT within render distance, remove it so it is not rendered.
         for(int i = 0; i < visibleChunks.size(); i++) {
             //finally update the chunks
-            visibleChunks.get(i).UpdateChunk(boxWorld.world, camera, control, player);
+            visibleChunks.get(i).UpdateChunk(boxWorld, camera, control, player, this);
 
             float chunkX = visibleChunks.get(i).position.x;
             /*
@@ -124,7 +126,7 @@ public class World {
             Chunk chunk = GetChunk(position + i);
 
             if(!visibleChunks.contains(chunk)) {
-                chunk.UpdateCollisionBoxes(boxWorld.world);
+                chunk.UpdateCollisionBoxes(boxWorld);
                 visibleChunks.add(chunk);
             }
         }
@@ -170,7 +172,9 @@ public class World {
 
     public Chunk GetChunk(int position) {
         if(!chunks.containsKey(position)) {
-            GenerateChunk(position);
+            return null;
+            //return null because chunks are now pre-generated
+            //GenerateChunk(position);
         }
 
         return chunks.get(position);
@@ -197,7 +201,7 @@ public class World {
 
     public void UpdateVisibleChunkCollisionBoxes() {
         for(Chunk chunk : visibleChunks) {
-            chunk.UpdateCollisionBoxes(boxWorld.world);
+            chunk.UpdateCollisionBoxes(boxWorld);
         }
     }
 }

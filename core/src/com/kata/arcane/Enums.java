@@ -30,6 +30,9 @@ public class Enums {
         TREE_CAP,
         TREE_MIDDLE,
         TREE_BASE,
-        DIRT_WALL
+        DIRT_WALL,
+        WOOD,
+        WOOD_WALL,
+        LIGHT
     }
 }

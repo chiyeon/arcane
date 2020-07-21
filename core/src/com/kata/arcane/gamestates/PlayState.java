@@ -4,16 +4,14 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.kata.arcane.ArcaneGame;
 import com.kata.arcane.Control;
 import com.kata.arcane.Enums;
 import com.kata.arcane.entities.Player;
 import com.kata.arcane.physics.Box2DWorld;
-import com.kata.arcane.tiles.Chunk;
+import com.kata.arcane.tiles.GameWorld;
 import com.kata.arcane.tiles.Tile;
-import com.kata.arcane.tiles.World;
 
 public class PlayState extends State {
     private Box2DWorld boxWorld;
@@ -24,7 +22,7 @@ public class PlayState extends State {
 
     private Player player;
 
-    private World world;
+    private GameWorld gameWorld;
 
     Tile tile;
 
@@ -41,7 +39,7 @@ public class PlayState extends State {
         camera.position.y = player.position.y - 5;
         //camera.zoom = 4f;
 
-        world = new World(boxWorld);
+        gameWorld = new GameWorld(boxWorld);
         Gdx.input.setInputProcessor(control);
         tile = new Tile(Enums.TileType.STONE);
 
@@ -54,7 +52,7 @@ public class PlayState extends State {
 
     @Override
     public void update(float dt) {
-        world.UpdateWorld((int)player.position.x, camera, control, player);
+        gameWorld.UpdateWorld((int)player.position.x, camera, control, player);
         handleInput();
         player.dirX = 0;
 
@@ -70,7 +68,7 @@ public class PlayState extends State {
         }
 
         if(Gdx.input.isKeyJustPressed(Input.Keys.N)) {
-            world.UpdateVisibleChunkCollisionBoxes();
+            gameWorld.UpdateVisibleChunkCollisionBoxes();
         }
 
         boxWorld.tick();
@@ -81,13 +79,14 @@ public class PlayState extends State {
     public void render(SpriteBatch batch) {
 
         camera.position.x = player.position.x;
+        camera.position.y = player.position.y + 16;
         camera.update();
 
         batch.setProjectionMatrix(camera.combined);
         Gdx.gl.glClearColor(135f/255f, 206f/255f, 250f/255f, 1);
         batch.begin();
 
-        world.RenderWorld(batch);
+        gameWorld.RenderWorld(batch);
         player.render(batch);
 
 

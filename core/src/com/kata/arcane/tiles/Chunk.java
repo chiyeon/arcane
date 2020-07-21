@@ -1,7 +1,6 @@
 package com.kata.arcane.tiles;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
@@ -12,17 +11,14 @@ import com.badlogic.gdx.physics.box2d.World;
 import com.kata.arcane.Control;
 import com.kata.arcane.Enums.*;
 import com.kata.arcane.entities.Player;
-import com.kata.arcane.inventory.items.Item;
 import com.kata.arcane.inventory.items.ItemDatabase;
 import com.kata.arcane.inventory.items.ItemInstance;
 import com.kata.arcane.inventory.items.TileItem;
 import com.kata.arcane.physics.Box2DFactory;
+import com.kata.arcane.physics.Box2DWorld;
 
-import java.awt.geom.Point2D;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 public class Chunk {
     public static int WIDTH = 8;
@@ -57,7 +53,7 @@ public class Chunk {
         }
     }
 
-    public void UpdateChunk(World world, Camera camera, Control control, Player player) {
+    public void UpdateChunk(Box2DWorld world, Camera camera, Control control, Player player, GameWorld gameworld) {
         /*
         for(int i = 0; i < tiles.length; i++) {
             if(tiles[i].rectangle.contains(new Vector2(Gdx.input.getX(), Gdx.input.getY()))) {
@@ -78,24 +74,12 @@ public class Chunk {
                         tiles[i].ChangeType(((TileItem)item.item).tileType);
                         player.inventory.RemoveItem(item.item, 1);
                     } else if(item != null && item.item == ItemDatabase.pickaxe && tiles[i].type != TileType.AIR) {
-                        switch(tiles[i].type) {
-                            case GRASS:
-                                player.inventory.AddItem(ItemDatabase.grass, 1);
-                                break;
-                            case DIRT:
-                                player.inventory.AddItem(ItemDatabase.dirt, 1);
-                                break;
-                            case DIRT_WALL:
-                                player.inventory.AddItem(ItemDatabase.dirtwall, 1);
-                                break;
-                            case STONE:
-                                player.inventory.AddItem(ItemDatabase.stone, 1);
-                                break;
-                        }
+                        player.inventory.AddItem(tiles[i].dropItem, 1);
                         tiles[i].ChangeType(TileType.AIR);
                     }
 
-                    UpdateLightLevel();
+                    RemoveCollisionBoxes(world.world);
+                    UpdateLightLevel(gameworld);
                     UpdateCollisionBoxes(world);
                 }
             }
@@ -105,12 +89,12 @@ public class Chunk {
     //easier way to get a tile from the x and y
     public Tile GetTile(int x, int y) {
         int index = x + y * WIDTH;
-        if(index >= tiles.length) {
+        if(index >= tiles.length || index < 0) {
             System.out.println("Attempted to retrieve a tile that doesn't exist!");
             return null;
         }
 
-        return tiles[x + y * WIDTH];
+        return tiles[index];
     }
 
     //gets the tile above the specified coordinates if it exists
@@ -156,7 +140,7 @@ public class Chunk {
         return new Vector3((position.x * WIDTH + x) * 8, y * 8, 0);
     }
 
-    public void UpdateCollisionBoxes(World world) {
+    public void UpdateCollisionBoxes(Box2DWorld world) {
         for(int x = 0; x < WIDTH; x++) {
             for(int y = 0; y < HEIGHT; y++) {
                 if(GetTile(x, y).isSolid) {
@@ -164,15 +148,26 @@ public class Chunk {
                     for(int i = 0; i < nearbyTiles.size(); i++) {
                         if(!nearbyTiles.get(i).isSolid) {
                             //set collision
-                            collisionBoxes.put(x + y * WIDTH, Box2DFactory.createBody(world, 8, 8, GetWorldPosition(x, y), BodyDef.BodyType.StaticBody));
-
+                            collisionBoxes.put(x + y * WIDTH, Box2DFactory.createBody(world.world, 8, 8, GetWorldPosition(x, y), BodyDef.BodyType.StaticBody));
                             break;
                         }
                     }
-
                 } else {
                     if(collisionBoxes.containsKey(x + y * WIDTH)) {
-                        world.destroyBody(collisionBoxes.get(x + y * WIDTH));
+                        world.RemoveBody(collisionBoxes.get(x + y * WIDTH));
+                        collisionBoxes.remove(x + y * WIDTH);
+                    }
+                }
+            }
+        }
+    }
+
+    public void RemoveCollisionBoxes(Box2DWorld world) {
+        for(int x = 0; x < WIDTH; x++) {
+            for(int y = 0; y < HEIGHT; y++) {
+                if(!GetTile(x, y).isSolid) {
+                    if(collisionBoxes.containsKey(x + y * WIDTH)) {
+                        world.RemoveBody(collisionBoxes.get(x + y * WIDTH));
                         collisionBoxes.remove(x + y * WIDTH);
                     }
                 }
@@ -194,7 +189,7 @@ public class Chunk {
         }
     }
 
-    public void UpdateLightLevel() {
+    public void UpdateLightLevel(GameWorld gameWorld) {
         //iterate through each tile x
         for(int x = 0; x < WIDTH; x++) {
             //get the highest tile
@@ -220,6 +215,38 @@ public class Chunk {
                 }
             }
         }
+
+        Chunk nextChunk = gameWorld.GetChunk((int)position.x + 1);
+        Chunk prevChunk = gameWorld.GetChunk((int)position.x - 1);
+
+        for(int x = 0; x < WIDTH; x++) {
+            for(int y = 0; y < HEIGHT; y++) {
+                Tile tile = GetTile(x, y);
+                if(tile.type == TileType.LIGHT) {
+                    int travelDistance = 8;
+                    for(int i = x - travelDistance; i <= x + travelDistance; i++) {
+                        for(int j = y - travelDistance; j <= y + travelDistance; j++) {
+                            float distanceFromLightSource = (float) Math.sqrt(square(x - i) + square(y - j));
+                            float lightLevel = travelDistance / (distanceFromLightSource * distanceFromLightSource);
+
+                            //check if it is going into a new chunk
+                            if(i > WIDTH) {
+                                nextChunk.GetTile(i, j).ApplyLightLevel(lightLevel);
+                            } else if(i < 0) {
+                                prevChunk.GetTile(i, j).ApplyLightLevel(lightLevel);
+                            } else {
+                                GetTile(i, j).ApplyLightLevel(lightLevel);
+                            }
+                        }
+                    }
+                    tile.lightLevel = 1.0f;
+                }
+            }
+        }
+    }
+
+    public float square(float c) {
+        return c * c;
     }
 
     //completely destroys all collision boxes. used for unloading chunks
@@ -227,5 +254,6 @@ public class Chunk {
         for(Body body : collisionBoxes.values()) {
             world.destroyBody(body);
         }
+        collisionBoxes.clear();
     }
 }

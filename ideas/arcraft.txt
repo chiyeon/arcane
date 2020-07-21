@@ -1,0 +1,23 @@
+game about building items
+can craft/obtain items (ie crossbow, steel greatsword, mythril dagger)
+can upgrade the items:
+
+'enchant' or arcane
+Arcane mythril dagger
+
+arcanes add individual enchantments that aid stats
+
+will of the ancients: +50 hp increase when equipped
+
+enchant by picking 1 of 3 options 3 times
+each syllable adds up to a total enchantment
+
+ex: Ka Ru Do - osdifsoidjf
+
+
+can also add the modifier
+crossbow of frost
+
+adds extra damage type
+
+maybe adapt some kiri classes?

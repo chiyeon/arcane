@@ -28,6 +28,8 @@ public class Player extends Entity {
         inventory = new Inventory(10);
         equippedArmor = new ArmorItem[3];
         body = Box2DFactory.createBody(world, 7, 15, position, BodyDef.BodyType.DynamicBody);
+
+        inventory.AddItem(ItemDatabase.pickaxe, 1);
     }
 
     @Override
@@ -54,7 +56,7 @@ public class Player extends Entity {
 
 
         else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_1)) {
-            inventory.AddItem(ItemDatabase.stick, 1);
+            inventory.AddItem(ItemDatabase.light, 1);
         } else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_2)) {
             inventory.AddItem(ItemDatabase.steelSword, 1);
         } else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_3)) {
@@ -68,7 +70,9 @@ public class Player extends Entity {
         } else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_7)) {
             inventory.AddItem(ItemDatabase.stone, 1);
         } else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_8)) {
-            inventory.AddItem(ItemDatabase.pickaxe, 1);
+            inventory.AddItem(ItemDatabase.wood, 1);
+        } else if(Gdx.input.isKeyJustPressed(Input.Keys.NUM_9)) {
+            inventory.AddItem(ItemDatabase.woodwall, 1);
         }
     }
 

@@ -11,4 +11,7 @@ public class ItemDatabase {
     public static Item dirtwall = new TileItem(5, "Dirt Wall", "A recessed hunk of dirt", "tiles/dirt_wall.png", true, TileType.DIRT_WALL);
     public static Item stone = new TileItem(6, "Stone", "Big piece of stone", "tiles/stone.png", true, TileType.STONE);
     public static Item pickaxe = new WeaponItem(7, "Steel Pickaxe", "Mostly pick, a little axe", "items/pick.png", 2, 1);
+    public static Item wood = new TileItem(8, "Wood", "A tile of wood", "tiles/wood.png", true, TileType.WOOD);
+    public static Item woodwall = new TileItem(9, "Wood Wall", "A wall of wood", "tiles/wood_wall.png", true, TileType.WOOD_WALL);
+    public static Item light = new TileItem(10, "Light Block", "Emits light", "tiles/light.png", true, TileType.LIGHT);
 }
